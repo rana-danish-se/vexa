@@ -1,15 +1,15 @@
-import { verifyToken } from '../services/auth/token.service.js';
+import { verifyAccessToken } from '../services/auth/token.service.js';
 import { UnauthorizedError } from '../utils/errors.js';
 
 export const requireAuth = (req, res, next) => {
   try {
-    const token = req.cookies[process.env.COOKIE_NAME];
+    const token = req.cookies[process.env.ACCESS_COOKIE_NAME];
     
     if (!token) {
       throw new UnauthorizedError('Authentication required');
     }
 
-    const decoded = verifyToken(token);
+    const decoded = verifyAccessToken(token);
     req.business = decoded;
     next();
   } catch (err) {

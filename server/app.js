@@ -7,6 +7,7 @@ import passport from './services/auth/google.service.js';
 import { generalRateLimit } from './middleware/rateLimit.middleware.js';
 import { errorResponse } from './utils/response.js';
 import authRoutes from './routes/auth.routes.js';
+import chatbotRoutes from './routes/chatbot.routes.js';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(passport.initialize());
 app.use(generalRateLimit);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/chatbots', chatbotRoutes);
 
 app.use((err, req, res, next) => {
   if (err.isOperational) {

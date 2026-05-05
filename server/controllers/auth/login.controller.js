@@ -1,7 +1,7 @@
 import { validateLogin } from '../../validations/auth.validation.js';
 import supabase from '../../config/supabase.js';
 import bcrypt from 'bcryptjs';
-import { generateToken, attachTokenCookie } from '../../services/auth/token.service.js';
+import { generateAccessToken, generateRefreshToken, attachTokenCookies } from '../../services/auth/token.service.js';
 import { successResponse, errorResponse } from '../../utils/response.js';
 import { UnauthorizedError } from '../../utils/errors.js';
 
@@ -37,13 +37,21 @@ export const loginController = async (req, res, next) => {
       throw new UnauthorizedError('Invalid email or password.');
     }
 
-    const token = generateToken({
+    const accessToken = generateAccessToken({
       id: business.id,
       email: business.email,
       plan: business.plan,
     });
 
-    attachTokenCookie(res, token);
+    const refreshToken = generateRefreshToken({ id: business.id });
+
+    // Store refresh token in database
+    await supabase
+      .from('businesses')
+      .update({ refresh_token: refreshToken })
+      .eq('id', business.id);
+
+    attachTokenCookies(res, accessToken, refreshToken);
 
     return successResponse(
       res,

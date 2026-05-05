@@ -1,9 +1,16 @@
-import { clearTokenCookie } from '../../services/auth/token.service.js';
+import { clearTokenCookies } from '../../services/auth/token.service.js';
 import { successResponse } from '../../utils/response.js';
+import supabase from '../../config/supabase.js';
 
-export const logoutController = (req, res, next) => {
+export const logoutController = async (req, res, next) => {
   try {
-    clearTokenCookie(res);
+    if (req.business && req.business.id) {
+      await supabase
+        .from('businesses')
+        .update({ refresh_token: null })
+        .eq('id', req.business.id);
+    }
+    clearTokenCookies(res);
     return successResponse(res, null, 'Logged out successfully');
   } catch (error) {
     next(error);

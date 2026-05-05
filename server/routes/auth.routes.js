@@ -4,6 +4,7 @@ import { loginController } from '../controllers/auth/login.controller.js';
 import { verifyOtpController, resendOtpController } from '../controllers/auth/otp.controller.js';
 import { logoutController } from '../controllers/auth/logout.controller.js';
 import { googleAuth, googleCallback } from '../controllers/auth/google.controller.js';
+import { refreshTokenController } from '../controllers/auth/refresh.controller.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { loginRateLimit, otpRateLimit } from '../middleware/rateLimit.middleware.js';
 import supabase from '../config/supabase.js';
@@ -16,6 +17,7 @@ router.post('/login', loginRateLimit, loginController);
 router.post('/verify-otp', verifyOtpController);
 router.post('/resend-otp', otpRateLimit, resendOtpController);
 router.post('/logout', requireAuth, logoutController);
+router.post('/refresh', refreshTokenController);
 
 router.get('/google', googleAuth);
 router.get('/google/callback', googleCallback);

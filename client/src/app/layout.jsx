@@ -1,4 +1,5 @@
 import { Plus_Jakarta_Sans, Manrope, Inter, JetBrains_Mono } from "next/font/google";
+import { AuthHydrator } from "@/components/layout/AuthHydrator";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
       className={`${plusJakarta.variable} ${manrope.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background-primary text-text-primary border-border-base">
+        <AuthHydrator />
         {children}
       </body>
     </html>

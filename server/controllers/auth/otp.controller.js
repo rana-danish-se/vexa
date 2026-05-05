@@ -1,7 +1,7 @@
 import { validateOtp } from '../../validations/auth.validation.js';
 import { generateOtp, storeOtp, verifyOtp } from '../../services/auth/otp.service.js';
 import { sendOtpEmail } from '../../services/email/mailer.service.js';
-import { generateToken, attachTokenCookie } from '../../services/auth/token.service.js';
+import { generateAccessToken, generateRefreshToken, attachTokenCookies } from '../../services/auth/token.service.js';
 import { successResponse, errorResponse } from '../../utils/response.js';
 import { NotFoundError } from '../../utils/errors.js';
 import supabase from '../../config/supabase.js';
@@ -27,13 +27,21 @@ export const verifyOtpController = async (req, res, next) => {
       throw updateError;
     }
 
-    const token = generateToken({
+    const accessToken = generateAccessToken({
       id: updatedBusiness.id,
       email: updatedBusiness.email,
       plan: updatedBusiness.plan,
     });
 
-    attachTokenCookie(res, token);
+    const refreshToken = generateRefreshToken({ id: updatedBusiness.id });
+
+    // Store refresh token in database
+    await supabase
+      .from('businesses')
+      .update({ refresh_token: refreshToken })
+      .eq('id', updatedBusiness.id);
+
+    attachTokenCookies(res, accessToken, refreshToken);
 
     return successResponse(
       res,

@@ -14,7 +14,7 @@ export const loginRateLimit = rateLimit({
 
 export const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === "development" ? 10000 : 100, // relaxed for dev testing
   message: { success: false, message: 'Too many requests, please try again later' },
 });
 

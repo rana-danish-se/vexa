@@ -1,5 +1,6 @@
 import passport from 'passport';
-import { generateToken, attachTokenCookie } from '../../services/auth/token.service.js';
+import { generateAccessToken, generateRefreshToken, attachTokenCookies } from '../../services/auth/token.service.js';
+import supabase from '../../config/supabase.js'; // Added missing import for supabase
 
 export const googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
 
@@ -8,16 +9,24 @@ export const googleCallback = [
     session: false,
     failureRedirect: process.env.CLIENT_URL + '/login?error=google_failed',
   }),
-  (req, res) => {
+  async (req, res) => { // Made this callback async
     const business = req.user;
     
-    const token = generateToken({
+    const accessToken = generateAccessToken({
       id: business.id,
       email: business.email,
       plan: business.plan,
     });
 
-    attachTokenCookie(res, token);
+    const refreshToken = generateRefreshToken({ id: business.id });
+
+    // Store refresh token in database
+    await supabase
+      .from('businesses')
+      .update({ refresh_token: refreshToken })
+      .eq('id', business.id);
+
+    attachTokenCookies(res, accessToken, refreshToken);
 
     res.redirect(process.env.CLIENT_URL + '/dashboard');
   }

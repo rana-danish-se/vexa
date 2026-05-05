@@ -1,12 +1,35 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RiArrowRightLine, RiShieldCheckLine } from "react-icons/ri";
 import { Button } from "@/components/ui/Button";
+import { useAuthStore } from "@/store/useAuthStore";
 
-export default function VerifyPage() {
+function VerifyContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email");
+  
+  const { verify, resendOtp, isLoading, error } = useAuthStore();
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [cooldown, setCooldown] = useState(0);
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    if (!email) {
+      router.push("/auth/register");
+    }
+  }, [email, router]);
+
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   const handleChange = (index, value) => {
     if (value.length > 1) value = value.slice(-1);
@@ -22,6 +45,30 @@ export default function VerifyPage() {
     }
   };
 
+  const handleSubmit = async () => {
+    const code = otp.join("");
+    if (code.length !== 6) return;
+    
+    try {
+      await verify(email, code);
+      router.push("/dashboard");
+    } catch (err) {
+      // Handled by global store error
+    }
+  };
+
+  const handleResend = async () => {
+    if (cooldown > 0 || !email) return;
+    try {
+      await resendOtp({ email });
+      setCooldown(60);
+    } catch (err) {
+      // Handled silently or UI could show error via toaster
+    }
+  };
+
+  if (!email) return null;
+
   return (
     <div className="space-y-8">
       {/* Shield icon */}
@@ -36,11 +83,11 @@ export default function VerifyPage() {
           Check your email
         </h1>
         <p className="text-sm text-text-secondary font-manrope max-w-[280px] mx-auto leading-[1.7]">
-          We sent a 6-digit code to your email. Enter it below to verify your identity.
+          We sent a 6-digit code to <span className="font-semibold text-text-primary">{email}</span>. Enter it below to verify your identity.
         </p>
       </div>
 
-      {/* OTP inputs — surface-container-highest, no border default */}
+      {/* OTP inputs */}
       <div className="flex justify-between gap-2 sm:gap-3">
         {otp.map((digit, index) => (
           <input
@@ -57,18 +104,37 @@ export default function VerifyPage() {
         ))}
       </div>
 
+      {error && (
+        <p className="text-red-500 text-sm font-manrope text-center bg-red-500/10 py-2 rounded-lg">
+          {error}
+        </p>
+      )}
+
       <div className="space-y-4">
-        <Button className="w-full h-12 gap-2 text-sm sm:text-base">
-          Verify code <RiArrowRightLine size={17} />
+        <Button onClick={handleSubmit} disabled={isLoading || otp.join("").length !== 6} className="w-full h-12 gap-2 text-sm sm:text-base">
+          {isLoading ? "Verifying..." : "Verify code"} {!isLoading && <RiArrowRightLine size={17} />}
         </Button>
 
         <p className="text-center text-xs sm:text-sm text-text-secondary font-manrope">
           Didn't receive the code?{" "}
-          <button className="text-primary font-semibold hover:underline">
-            Resend
+          <button 
+            type="button" 
+            onClick={handleResend} 
+            disabled={cooldown > 0} 
+            className="text-primary font-semibold hover:underline disabled:opacity-50 disabled:no-underline"
+          >
+            {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend"}
           </button>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className="h-40 flex items-center justify-center text-text-secondary">Loading...</div>}>
+      <VerifyContent />
+    </Suspense>
   );
 }

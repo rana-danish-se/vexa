@@ -36,7 +36,7 @@ export const Button = ({
 
   const sizes = {
     sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base",
+    md: "px-5 py-3 text-md",
     lg: "px-8 py-4 text-lg",
   };
 
@@ -46,7 +46,7 @@ export const Button = ({
         "inline-flex items-center justify-center gap-2",
         "rounded-xl font-manrope font-semibold",
         "transition-all duration-200",
-        "disabled:opacity-40 disabled:pointer-events-none",
+        "disabled:opacity-40 cursor-pointer disabled:pointer-events-none",
         variants[variant],
         sizes[size],
         className
